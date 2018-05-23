@@ -14,27 +14,30 @@
 -export([init/1, start_link/1, start/1, handle_call/3, addStation/2]).
 -export([addValue/4, removeValue/3, crash/0, handle_call/3]).
 
-init(Args) ->
-  {ok, pollution:createMonitor()}.
+init(InitialValue) ->
+  {ok, InitialValue}.
 
 start_link(InitialValue) ->
   gen_server:start_link(
     {local, pollutionServer},
-    pollution_gen_server, InitialValue, []
+    pollution_gen_server, pollution_var_server:getMonitor(), []
   ).
 
-start(InitialValue) ->
+start(_) ->
   gen_server:start({local, pollutionServer},
-    pollution_gen_server, InitialValue, [] ).
+    pollution_gen_server, pollution_var_server:getMonitor(), [] ).
 
 handle_call({addStation, [Name, Location]}, _From, Monitor) ->
   NewMonitor = pollution:addStation(Monitor, Name, Location),
+  pollution_var_server:setMonitor(NewMonitor),
   {reply, Monitor /= NewMonitor, NewMonitor};
 handle_call({addValue, [Name, Date, Type, Value]}, _From, Monitor) ->
   NewMonitor = pollution:addValue(Monitor, Name, Date, Type, Value),
+  pollution_var_server:setMonitor(NewMonitor),
   {reply, Monitor /= NewMonitor, NewMonitor};
 handle_call({removeValue, [Name, Date, Type]}, _From, Monitor) ->
   NewMonitor = pollution:removeValue(Monitor, Name, Date, Type),
+  pollution_var_server:setMonitor(NewMonitor),
   {reply, Monitor /= NewMonitor, NewMonitor}.
 
 addStation(Name, Location) ->

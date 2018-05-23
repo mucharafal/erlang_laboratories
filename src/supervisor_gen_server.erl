@@ -18,11 +18,16 @@ start_link(InitValue) ->
 
 init(InitValue) ->
   {ok, {
-    {one_for_all, 2, 3},
+    {one_for_one, 2, 3},
     [
-      {var_server, {
-        var_server, start_link, [InitValue]},
-        permament, brutal_kill, worker, [var_server]
-      }}
+      {
+        pollution_var_server,
+        {pollution_var_server, start_link, [InitValue]},
+        permanent, brutal_kill, worker, [pollution_var_server]
+      },
+      {pollution_gen_server, {
+        pollution_gen_server, start_link, [InitValue]},
+        permanent, brutal_kill, worker, [pollution, pollution_gen_server]
+      }
     ]
   }}.
